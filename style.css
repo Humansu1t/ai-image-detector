@@ -166,7 +166,7 @@ button:hover{
     gap: 10px;
 }
 
-.tags-container .results .results-item{
+.tags-container .results .result-item{
     display: flex;
     background-color: #262626;
     padding: 6px 20px;
@@ -226,7 +226,7 @@ button:hover{
 
 .toast{
     visibility: hidden;
-    max-width: 280px;
+    max-width: 400px;
     background-color: #333;
     color: #fff;
     text-align: center;
