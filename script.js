@@ -10,7 +10,7 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
     const uploadModal = document.getElementById('uploadModal');
     const uploadProgress = document.getElementById('uploadProgress');
 
-    // If no file is selected, show toast image
+    // If no file is selected, show toast message
     if (!file) return showToast('Please select an image file first.');
 
     // Preview the selected image
@@ -40,19 +40,18 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
         });
 
         if (!uploadResponse.ok) {
-            const errorDetails = await uploadResponse.text();
             throw new Error(`Upload failed: ${errorDetails}`);
         }
 
         // Track upload progress
         const contentLength = +uploadResponse.headers.get('Content-Length');
-        const uploadReader = uploadResponse.body.getReader(); // Changed variable name
+        const reader = uploadResponse.body.getReader(); // Changed variable name
         let receivedLength = 0;
         let chunks = [];
 
         // Read response stream and update progress
         while (true) {
-            const { done, value } = await uploadReader.read();
+            const { done, value } = await reader.read();
             if (done) break;
             chunks.push(value);
             receivedLength += value.length;
@@ -72,8 +71,8 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
 
         // Fetch color and tag analysis from Imagga
         const [colorResult, tagsResult] = await Promise.all([
-            fetch(`https://api.imagga.com/v2/colors?upload_id=${upload_id}`, { headers: { 'Authorization': authHeader } }).then(res => res.json()),
-            fetch(`https://api.imagga.com/v2/tags?upload_id=${upload_id}`, { headers: { 'Authorization': authHeader } }).then(res => res.json()),
+            fetch(`https://api.imagga.com/v2/colors?image_upload_id=${upload_id}`, { headers: { 'Authorization': authHeader } }).then(res => res.json()),
+            fetch(`https://api.imagga.com/v2/tags?image_upload_id=${upload_id}`, { headers: { 'Authorization': authHeader } }).then(res => res.json()),
         ]);
 
         // Display the results
@@ -91,12 +90,12 @@ document.getElementById('uploadButton').addEventListener('click', async () => {
 
 // Function to display color analysis results
 const displayColors = colors => {
-    const colorContainer = document.querySelector('.colors-container');
-    colorContainer.innerHTML = ''; // Clear previous results
+    const colorsContainer = document.querySelector('.colors-container');
+    colorsContainer.innerHTML = ''; // Clear previous results
 
     // If no colors are found, show an error message
     if (![colors.background_colors, colors.foreground_colors, colors.image_colors].some(arr => arr.length)) {
-        colorContainer.innerHTML = '<p class="error">Nothing to show...</p>';
+        colorsContainer.innerHTML = '<p class="error">Nothing to show...</p>';
         return;
     }
 
@@ -105,7 +104,7 @@ const displayColors = colors => {
         return `
         <h3>${title}</h3>
         <div class="results">${colorData.map(({ html_code, closest_palette_color, percent }) => `
-        <div class="result-item" data-color="${html_code}">
+        <div class="results-item" data-color="${html_code}">
             <div>
                 <div class="color-box" style="background-color:${html_code}" title="Color code: ${html_code}">
                 </div>
@@ -122,9 +121,9 @@ const displayColors = colors => {
     };
 
     // Append generated color sections to the container
-    colorContainer.innerHTML += generateColorSection('Background Colors', colors.background_colors);
-    colorContainer.innerHTML += generateColorSection('Foreground Colors', colors.foreground_colors);
-    colorContainer.innerHTML += generateColorSection('Image Colors', colors.image_colors);
+    colorsContainer.innerHTML += generateColorSection('Background Colors', colors.background_colors);
+    colorsContainer.innerHTML += generateColorSection('Foreground Colors', colors.foreground_colors);
+    colorsContainer.innerHTML += generateColorSection('Image Colors', colors.image_colors);
 
     // Add click functionality to copy color code to a clipboard
     document.querySelectorAll('.colors-container .result-item').forEach(item => {
@@ -143,10 +142,10 @@ let displayedTags = 0;
 
 const displayTags = tags => {
     const tagsContainer = document.querySelector('.tags-container');
-    let resultList = document.querySelector('.results');
-    const error = document.querySelector('.error');
-    const seeMoreButton = document.querySelector('.seeMoreButton');
-    const exportTagsButton = document.querySelector('.exportTagsButton');
+    const resultList = tagsContainer.querySelector('.results');
+    const error = tagsContainer.querySelector('.error');
+    const seeMoreButton = document.getElementById('seeMoreButton');
+    const exportTagsButton = document.getElementById('exportTagsButton');
 
     // Clear previous tags
     if (resultList) {
@@ -155,7 +154,7 @@ const displayTags = tags => {
         const resultListContainer = document.createElement('div');
         resultListContainer.className = 'results';
         tagsContainer.insertBefore(resultListContainer, seeMoreButton);
-        resultList = resultListContainer; // Assign resultList for use later
+        
     }
 
     // Store all tags and initialize displayed tags count
@@ -186,8 +185,8 @@ const displayTags = tags => {
     showMoreTags(); // Initial load of tags
 
     // Event listeners for "See More" and "Export Tags" buttons
-    if (seeMoreButton) seeMoreButton.addEventListener('click', showMoreTags);
-    if (exportTagsButton) exportTagsButton.addEventListener('click', exportTagsToFile);
+    seeMoreButton.addEventListener('click', showMoreTags);
+    exportTagsButton.addEventListener('click', exportTagsToFile);
 };
 
 // Function to export tags to a text file
